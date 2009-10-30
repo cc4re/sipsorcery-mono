@@ -5,11 +5,12 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
 using SIPSorcery.CRM;
+using SIPSorcery.SIP.App;
 
-namespace SIPSorcery.SIP.App {
+namespace SIPSorcery.Web.Services {
 
-    [ServiceContract(Namespace = "http://www.sipsorcery.com/provisioningajax")]
-    public interface IProvisioningServiceAjax {
+    [ServiceContract(Namespace = "http://www.sipsorcery.com/provisioning/rest")]
+    public interface IProvisioningServiceREST {
 
         [OperationContract]
         [WebGet(UriTemplate = "isalive")]
@@ -20,9 +21,11 @@ namespace SIPSorcery.SIP.App {
         string Login(string username, string password);
 
         [OperationContract]
+        [WebGet(UriTemplate = "logout")]
         void Logout();
-        [WebGet(UriTemplate = "getsipdomains?whereexpression={whereexpression}&offset={offset}&count={count}")]
+
         [OperationContract]
+        [WebGet(UriTemplate = "sipdomains/{whereExpression}/{offset}/ {count}")]
         List<SIPDomain> GetSIPDomains(string whereExpression, int offset, int count);
 
         [OperationContract]

@@ -39,7 +39,7 @@ using System.Net.Sockets;
 using SIPSorcery.Sys;
 using log4net;
 
-namespace SIPSorcery.SIP.App
+namespace SIPSorcery.Web.Services
 {
     public class SilverlightPolicyServer
     {

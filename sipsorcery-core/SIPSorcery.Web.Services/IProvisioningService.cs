@@ -4,8 +4,9 @@ using System.Linq;
 using System.ServiceModel;
 using System.Text;
 using SIPSorcery.CRM;
+using SIPSorcery.SIP.App;
 
-namespace SIPSorcery.SIP.App {
+namespace SIPSorcery.Web.Services {
 
     [ServiceContract(Namespace = "http://www.sipsorcery.com/provisioning")]
     public interface IProvisioningService {
@@ -43,5 +44,7 @@ namespace SIPSorcery.SIP.App {
         [OperationContract] List<SIPDialogueAsset> GetCalls(string whereExpression, int offset, int count);
         [OperationContract] int GetCDRsCount(string whereExpression);
         [OperationContract] List<SIPCDRAsset> GetCDRs(string whereExpression, int offset, int count);
+        [OperationContract] void ExtendSession(int minutes);
+        [OperationContract] int GetTimeZoneOffsetMinutes();
     }
 }

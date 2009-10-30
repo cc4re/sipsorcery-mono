@@ -4,7 +4,7 @@ using System.ServiceModel.Configuration;
 using System.ServiceModel.Description;
 using System.ServiceModel.Dispatcher;
 
-namespace SIPSorcery.SIP.App
+namespace SIPSorcery.Web.Services
 {
     public class SilverlightFaultBehavior : BehaviorExtensionElement, IEndpointBehavior
     {

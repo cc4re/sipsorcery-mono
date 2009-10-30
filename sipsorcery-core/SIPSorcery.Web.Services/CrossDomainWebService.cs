@@ -45,7 +45,7 @@ using System.Xml;
 using SIPSorcery.Sys;
 using log4net;
 
-namespace SIPSorcery.SIP.App
+namespace SIPSorcery.Web.Services
 {
     [ServiceContract(Namespace="http://www.sipsorcery.com")]
     public interface ICrossDomain

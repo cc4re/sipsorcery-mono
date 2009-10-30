@@ -38,6 +38,7 @@ using System.Collections.Generic;
 using System.Linq.Dynamic;
 using System.Net;
 using System.ServiceModel;
+using System.ServiceModel.Activation;
 using System.ServiceModel.Description;
 using System.ServiceModel.Channels;
 using System.Text;
@@ -46,14 +47,18 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Timers;
 using System.Threading;
+using System.Web;
 using System.Xml;
 using SIPSorcery.CRM;
+using SIPSorcery.Persistence;
+using SIPSorcery.SIP.App;
 using SIPSorcery.Sys;
 using log4net;
 
-namespace SIPSorcery.SIP.App
+namespace SIPSorcery.Web.Services
 {
-    public class SIPProvisioningWebService : IProvisioningService, IProvisioningServiceAjax {
+    [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
+    public class SIPProvisioningWebService : IProvisioningService, IProvisioningServiceREST {
 
         public const string AUTH_TOKEN_KEY = "authid";
         private const string NEW_ACCOUNT_EMAIL_FROM_ADDRESS = "admin@sipsorcery.com";
@@ -113,7 +118,21 @@ namespace SIPSorcery.SIP.App
         }
 
         private string GetAuthId() {
-            return OperationContext.Current.IncomingMessageHeaders.GetHeader<string>(AUTH_TOKEN_KEY, "");
+            string authId = null;
+
+            if (OperationContext.Current.IncomingMessageHeaders.FindHeader(AUTH_TOKEN_KEY, "") != -1) {
+                authId = OperationContext.Current.IncomingMessageHeaders.GetHeader<string>(AUTH_TOKEN_KEY, "");
+            }
+            
+            if (authId.IsNullOrBlank() && HttpContext.Current != null) {
+                // If running in IIS check for a cookie.
+                HttpCookie authIdCookie = HttpContext.Current.Request.Cookies[AUTH_TOKEN_KEY];
+                if (authIdCookie != null) {
+                    logger.Debug("authid cookie found: " + authIdCookie.Value + ".");
+                    authId = authIdCookie.Value;
+                }
+            }
+            return authId;
         }
 
         private Customer AuthoriseRequest() {
@@ -155,7 +174,8 @@ namespace SIPSorcery.SIP.App
                 string authorisedWhereExpression = "owner=\"" + customer.CustomerUsername + "\"";
                 if (customer.AdminId == Customer.TOPLEVEL_ADMIN_ID) {
                     // This user is the top level administrator and has permission to view all system assets.
-                    authorisedWhereExpression = "true";
+                    //authorisedWhereExpression = "true";
+                    authorisedWhereExpression = null;
                 }
                 else if (!customer.AdminId.IsNullOrBlank()) {
                     authorisedWhereExpression =
@@ -192,13 +212,15 @@ namespace SIPSorcery.SIP.App
                 }
                 else {
                     // Check whether the username is already taken.
-                    Customer existingCustomer = CRMCustomerPersistor.Get(c => c.CustomerUsername.ToLower() == customer.CustomerUsername.ToLower());
+                    customer.CustomerUsername = customer.CustomerUsername.ToLower();
+                    Customer existingCustomer = CRMCustomerPersistor.Get(c => c.CustomerUsername == customer.CustomerUsername);
                     if (existingCustomer != null) {
                         throw new ApplicationException("The requested username is already in use please try a different one.");
                     }
 
                     // Check whether the email address is already taken.
-                    existingCustomer = CRMCustomerPersistor.Get(c => c.EmailAddress.ToLower() == customer.EmailAddress.ToLower());
+                    customer.EmailAddress = customer.EmailAddress.ToLower();
+                    existingCustomer = CRMCustomerPersistor.Get(c => c.EmailAddress == customer.EmailAddress);
                     if (existingCustomer != null) {
                         throw new ApplicationException("The email address is already associated with an account.");
                     }
@@ -286,11 +308,39 @@ namespace SIPSorcery.SIP.App
 
                 CustomerSession customerSession = CRMSessionManager.Authenticate(username, password, ipAddress);
                 if (customerSession != null) {
+                    
+                    // If running in IIS add a cookie for javascript clients.
+                    if (HttpContext.Current != null) {
+                        logger.Debug("Setting authid cookie for " + customerSession.CustomerUsername + ".");
+                        HttpCookie authCookie = new HttpCookie(AUTH_TOKEN_KEY, customerSession.SessionID);
+                        authCookie.Secure = HttpContext.Current.Request.IsSecureConnection;
+                        authCookie.HttpOnly = true;
+                        authCookie.Expires = DateTime.Now.AddMinutes(customerSession.TimeLimitMinutes);
+                        HttpContext.Current.Response.Cookies.Set(authCookie);
+                    }
+
                     return customerSession.SessionID;
                 }
                 else {
                     return null;
                 }
+            }
+        }
+
+        public void ExtendSession(int minutes) {
+            try {
+                Customer customer = AuthoriseRequest();
+
+                logger.Debug("SIPProvisioningWebService  ExtendSession called for " + customer.CustomerUsername + " and " + minutes + " minutes.");
+                if (HttpContext.Current != null) {
+                    HttpCookie authIdCookie = HttpContext.Current.Request.Cookies[AUTH_TOKEN_KEY];
+                    authIdCookie.Expires = authIdCookie.Expires.AddMinutes(minutes);
+                }
+                CRMSessionManager.ExtendSession(GetAuthId(), minutes);
+            }
+            catch (Exception excp) {
+                logger.Error("Exception ExtendSession. " + excp.Message);
+                throw;
             }
         }
 
@@ -300,6 +350,11 @@ namespace SIPSorcery.SIP.App
 
                 logger.Debug("SIPProvisioningWebService Logout called for " + customer.CustomerUsername + ".");
                 CRMSessionManager.ExpireToken(GetAuthId());
+
+                // If running in IIS remove the cookie.
+                if (HttpContext.Current != null) {
+                    HttpContext.Current.Request.Cookies.Remove(AUTH_TOKEN_KEY);
+                }
 
                 // Fire a machine log event to disconnect the silverlight tcp socket.
                 LogDelegate_External(new SIPMonitorMachineEvent(SIPMonitorMachineEventTypesEnum.Logout, customer.CustomerUsername, null, null));
@@ -324,6 +379,26 @@ namespace SIPSorcery.SIP.App
             }
         }
 
+        public int GetTimeZoneOffsetMinutes() {
+            try {
+                Customer customer = AuthoriseRequest();
+
+                if (!customer.TimeZone.IsNullOrBlank()) {
+                    foreach (TimeZoneInfo timezone in TimeZoneInfo.GetSystemTimeZones()) {
+                        if (timezone.DisplayName == customer.TimeZone) {
+                            return (int)timezone.BaseUtcOffset.TotalMinutes;
+                        }
+                    }
+                }
+
+                return 0;
+            }
+            catch (Exception excp) {
+                logger.Error("Exception GetTimeZoneOffsetMinutes. " + excp.Message);
+                return 0;
+            }
+        }
+
         public void UpdateCustomer(Customer updatedCustomer) {
             Customer customer = AuthoriseRequest();
 
@@ -337,6 +412,7 @@ namespace SIPSorcery.SIP.App
                 customer.City = updatedCustomer.City;
                 customer.Country = updatedCustomer.Country;
                 customer.WebSite = updatedCustomer.WebSite;
+                customer.TimeZone = updatedCustomer.TimeZone;
 
                 string validationError = Customer.ValidateAndClean(customer);
                 if (validationError != null) {
@@ -387,7 +463,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetSIPAccountsCount called for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPAccountPersistor.Count(DynamicExpression.ParseLambda<SIPAccount, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPAccountPersistor.Count(null);
+            }
+            else {
+                return SIPAccountPersistor.Count(DynamicExpression.ParseLambda<SIPAccount, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPAccount> GetSIPAccounts(string whereExpression, int offset, int count) {
@@ -396,7 +477,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetSIPAccountscalled for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPAccountPersistor.Get(DynamicExpression.ParseLambda<SIPAccount, bool>(authoriseExpression), "sipusername", offset, count);
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPAccountPersistor.Get(null, "sipusername", offset, count);
+            }
+            else {
+                return SIPAccountPersistor.Get(DynamicExpression.ParseLambda<SIPAccount, bool>(authoriseExpression), "sipusername", offset, count);
+            }
         }
 
         public SIPAccount AddSIPAccount(SIPAccount sipAccount) {
@@ -449,7 +535,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetSIPRegistrarBindingsCount for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPRegistrarBindingsPersistor.Count(DynamicExpression.ParseLambda<SIPRegistrarBinding, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPRegistrarBindingsPersistor.Count(null);
+            }
+            else {
+                return SIPRegistrarBindingsPersistor.Count(DynamicExpression.ParseLambda<SIPRegistrarBinding, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPRegistrarBinding> GetSIPRegistrarBindings(string whereExpression, int offset, int count) {
@@ -457,7 +548,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetSIPRegistrarBindings for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPRegistrarBindingsPersistor.Get(DynamicExpression.ParseLambda<SIPRegistrarBinding, bool>(authoriseExpression), "sipaccountname", offset, count);
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPRegistrarBindingsPersistor.Get(null, "sipaccountname", offset, count);
+            }
+            else {
+                return SIPRegistrarBindingsPersistor.Get(DynamicExpression.ParseLambda<SIPRegistrarBinding, bool>(authoriseExpression), "sipaccountname", offset, count);
+            }
         }
 
         public int GetSIPProvidersCount(string whereExpression) {
@@ -465,15 +561,25 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetSIPProvidersCount for " + customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPProviderPersistor.Count(DynamicExpression.ParseLambda<SIPProvider, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPProviderPersistor.Count(null);
+            }
+            else {
+                return SIPProviderPersistor.Count(DynamicExpression.ParseLambda<SIPProvider, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPProvider> GetSIPProviders(string whereExpression, int offset, int count) {
             Customer customer = AuthoriseRequest();
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
 
-            //logger.Debug("SIPProvisioningWebService GetSIPProviders for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
-            return SIPProviderPersistor.Get(DynamicExpression.ParseLambda<SIPProvider, bool>(authoriseExpression), "providername", offset, count);
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPProviderPersistor.Get(null, "providername", offset, count);
+            }
+            else {
+                //logger.Debug("SIPProvisioningWebService GetSIPProviders for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
+                return SIPProviderPersistor.Get(DynamicExpression.ParseLambda<SIPProvider, bool>(authoriseExpression), "providername", offset, count);
+            }
         }
 
         public SIPProvider AddSIPProvider(SIPProvider sipProvider) {
@@ -525,14 +631,24 @@ namespace SIPSorcery.SIP.App
             Customer customer = AuthoriseRequest();
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
 
-            return SIPProviderBindingsPersistor.Count(DynamicExpression.ParseLambda<SIPProviderBinding, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPProviderBindingsPersistor.Count(null);
+            }
+            else {
+                return SIPProviderBindingsPersistor.Count(DynamicExpression.ParseLambda<SIPProviderBinding, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPProviderBinding> GetSIPProviderBindings(string whereExpression, int offset, int count) {
             Customer customer = AuthoriseRequest();
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
 
-            return SIPProviderBindingsPersistor.Get(DynamicExpression.ParseLambda<SIPProviderBinding, bool>(authoriseExpression), "providername", offset, count);
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPProviderBindingsPersistor.Get(null, "providername asc", offset, count);
+            }
+            else {
+                return SIPProviderBindingsPersistor.Get(DynamicExpression.ParseLambda<SIPProviderBinding, bool>(authoriseExpression), "providername asc", offset, count);
+            }
         }
 
         public int GetDialPlansCount(string whereExpression) {
@@ -540,15 +656,25 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetDialPlansCount for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return DialPlanPersistor.Count(DynamicExpression.ParseLambda<SIPDialPlan, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return DialPlanPersistor.Count(null);
+            }
+            else {
+                return DialPlanPersistor.Count(DynamicExpression.ParseLambda<SIPDialPlan, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPDialPlan> GetDialPlans(string whereExpression, int offset, int count) {
             Customer customer = AuthoriseRequest();
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
-            //logger.Debug("SIPProvisioningWebService GetDialPlans for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
+            logger.Debug("SIPProvisioningWebService GetDialPlans for " + customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return DialPlanPersistor.Get(DynamicExpression.ParseLambda<SIPDialPlan, bool>(authoriseExpression), "dialplanname", offset, count);
+            if (authoriseExpression.IsNullOrBlank()) {
+                return DialPlanPersistor.Get(null, "dialplanname asc", offset, count);
+            }
+            else {
+                return DialPlanPersistor.Get(DynamicExpression.ParseLambda<SIPDialPlan, bool>(authoriseExpression), "dialplanname asc", offset, count);
+            }
         }
 
         public SIPDialPlan AddDialPlan(SIPDialPlan dialPlan) {
@@ -592,7 +718,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetCallsCount for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPDialoguePersistor.Count(DynamicExpression.ParseLambda<SIPDialogueAsset, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPDialoguePersistor.Count(null);
+            }
+            else {
+                return SIPDialoguePersistor.Count(DynamicExpression.ParseLambda<SIPDialogueAsset, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPDialogueAsset> GetCalls(string whereExpression, int offset, int count) {
@@ -601,7 +732,12 @@ namespace SIPSorcery.SIP.App
             string authorisedExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetCalls for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPDialoguePersistor.Get(DynamicExpression.ParseLambda<SIPDialogueAsset, bool>(authorisedExpression), null, offset, count);
+            if (authorisedExpression.IsNullOrBlank()) {
+                return SIPDialoguePersistor.Get(null, null, offset, count);
+            }
+            else {
+                return SIPDialoguePersistor.Get(DynamicExpression.ParseLambda<SIPDialogueAsset, bool>(authorisedExpression), null, offset, count);
+            }
         }
 
         public int GetCDRsCount(string whereExpression) {
@@ -610,7 +746,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetCDRsCount for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPCDRPersistor.Count(DynamicExpression.ParseLambda<SIPCDRAsset, bool>(authoriseExpression));
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPCDRPersistor.Count(null);
+            }
+            else {
+                return SIPCDRPersistor.Count(DynamicExpression.ParseLambda<SIPCDRAsset, bool>(authoriseExpression));
+            }
         }
 
         public List<SIPCDRAsset> GetCDRs(string whereExpression, int offset, int count) {
@@ -619,7 +760,12 @@ namespace SIPSorcery.SIP.App
             string authoriseExpression = GetAuthorisedWhereExpression(customer, whereExpression);
             //logger.Debug("SIPProvisioningWebService GetCDRs for " + customerSession.Customer.CustomerUsername + " and where: " + authoriseExpression + ".");
 
-            return SIPCDRPersistor.Get(DynamicExpression.ParseLambda<SIPCDRAsset, bool>(authoriseExpression), "createdutc", offset, count);
+            if (authoriseExpression.IsNullOrBlank()) {
+                return SIPCDRPersistor.Get(null, "created desc", offset, count);
+            }
+            else {
+                return SIPCDRPersistor.Get(DynamicExpression.ParseLambda<SIPCDRAsset, bool>(authoriseExpression), "created desc", offset, count);
+            }
         }
     }
 }

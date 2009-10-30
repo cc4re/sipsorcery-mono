@@ -9,10 +9,12 @@ using System.ServiceModel.Description;
 using System.ServiceModel.Dispatcher;
 using System.Text;
 using SIPSorcery.CRM;
+using SIPSorcery.Persistence;
+using SIPSorcery.SIP.App;
 using SIPSorcery.Sys;
 using log4net;
 
-namespace SIPSorcery.SIP.App {
+namespace SIPSorcery.Web.Services {
 
     public class InstanceProviderExtensionElement : BehaviorExtensionElement {
 
@@ -20,9 +22,16 @@ namespace SIPSorcery.SIP.App {
 
         private static ILog logger = AppState.GetLogger("provisioningsvc");
 
-        private static readonly string m_storageTypeKey = Persistence.PERSISTENCE_STORAGETYPE_KEY;
-        private static readonly string m_connStrKey = Persistence.PERSISTENCE_STORAGECONNSTR_KEY;
+        private static readonly string m_storageTypeKey = SIPSorcery.Persistence.Persistence.PERSISTENCE_STORAGETYPE_KEY;
+        private static readonly string m_connStrKey = SIPSorcery.Persistence.Persistence.PERSISTENCE_STORAGECONNSTR_KEY;
         private static readonly string m_newCustomersAllowedLimitKey = "NewCustomersAllowedLimit";
+        private static readonly string m_providersStorageFileName = AssemblyState.XML_SIPPROVIDERS_FILENAME;
+        private static readonly string m_providerBindingsStorageFileName = AssemblyState.XML_SIPPROVIDERS_FILENAME;
+        private static readonly string m_sipAccountsStorageFileName = AssemblyState.XML_SIPACCOUNTS_FILENAME;
+        private static readonly string m_dialplansStorageFileName = AssemblyState.XML_DIALPLANS_FILENAME;
+        private static readonly string m_registrarBindingsStorageFileName = AssemblyState.XML_REGISTRAR_BINDINGS_FILENAME;
+        private static readonly string m_dialoguesStorageFileName = AssemblyState.XML_SIPDIALOGUES_FILENAME;
+        private static readonly string m_cdrsStorageFileName = AssemblyState.XML_SIPCDRS_FILENAME;
 
         private static StorageTypes m_serverStorageType;
         private static string m_serverStorageConnStr;
@@ -48,8 +57,8 @@ namespace SIPSorcery.SIP.App {
 
                 // The Registration Agent wants to know about any changes to SIP Provider entries in order to update any SIP 
                 // Provider bindings it is maintaining or needs to add or remove.
-                SIPAssetPersistor<SIPProvider> sipProviderPersistor = SIPAssetPersistorFactory.CreateSIPProviderPersistor(m_serverStorageType, m_serverStorageConnStr);
-                SIPAssetPersistor<SIPProviderBinding> sipProviderBindingsPersistor = SIPAssetPersistorFactory.CreateSIPProviderBindingPersistor(m_serverStorageType, m_serverStorageConnStr);
+                SIPAssetPersistor<SIPProvider> sipProviderPersistor = SIPAssetPersistorFactory<SIPProvider>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_providersStorageFileName);
+                SIPAssetPersistor<SIPProviderBinding> sipProviderBindingsPersistor = SIPAssetPersistorFactory<SIPProviderBinding>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_providerBindingsStorageFileName);
                 SIPProviderBindingSynchroniser sipProviderBindingSynchroniser = new SIPProviderBindingSynchroniser(sipProviderBindingsPersistor);
 
                 sipProviderPersistor.Added += sipProviderBindingSynchroniser.SIPProviderAdded;
@@ -57,13 +66,13 @@ namespace SIPSorcery.SIP.App {
                 sipProviderPersistor.Deleted += sipProviderBindingSynchroniser.SIPProviderDeleted;
 
                 return new ProvisioningServiceInstanceProvider(
-                    SIPAssetPersistorFactory.CreateSIPAccountPersistor(m_serverStorageType, m_serverStorageConnStr),
-                    SIPAssetPersistorFactory.CreateDialPlanPersistor(m_serverStorageType, m_serverStorageConnStr),
+                    SIPAssetPersistorFactory<SIPAccount>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_sipAccountsStorageFileName),
+                    SIPAssetPersistorFactory<SIPDialPlan>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_dialplansStorageFileName),
                     sipProviderPersistor,
                     sipProviderBindingsPersistor,
-                    SIPAssetPersistorFactory.CreateSIPRegistrarBindingPersistor(m_serverStorageType, m_serverStorageConnStr),
-                    SIPAssetPersistorFactory.CreateSIPDialoguePersistor(m_serverStorageType, m_serverStorageConnStr),
-                    SIPAssetPersistorFactory.CreateSIPCDRPersistor(m_serverStorageType, m_serverStorageConnStr),
+                    SIPAssetPersistorFactory<SIPRegistrarBinding>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_registrarBindingsStorageFileName),
+                    SIPAssetPersistorFactory<SIPDialogueAsset>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_dialoguesStorageFileName),
+                    SIPAssetPersistorFactory<SIPCDRAsset>.CreateSIPAssetPersistor(m_serverStorageType, m_serverStorageConnStr, m_cdrsStorageFileName),
                     new CustomerSessionManager(m_serverStorageType, m_serverStorageConnStr),
                     new SIPDomainManager(m_serverStorageType, m_serverStorageConnStr),
                     (e) => { logger.Debug(e.Message); },
