@@ -1,10 +1,10 @@
 //-----------------------------------------------------------------------------
-// Filename: STUNMessage.cs
+// Filename: STUNv2Message.cs
 //
 // Description: Implements STUN Message as defined in RFC3489.
 //
 // History:
-// 27 Dec 2006	Aaron Clauson	Created.
+// 26 Nov 2010	Aaron Clauson	Created.
 //
 // License: 
 // This software is licensed under the BSD License http://www.opensource.org/licenses/bsd-license.php
@@ -33,7 +33,9 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
+using SIPSorcery.Sys;
 using log4net;
 
 #if UNITTEST
@@ -42,31 +44,60 @@ using NUnit.Framework;
 
 namespace SIPSorcery.Net
 {
-    public class STUNMessage
+    public class STUNv2Message
 	{
+        private const int FINGERPRINT_XOR = 0x5354554e;
+
         private static ILog logger = STUNAppState.logger;
         
-        public STUNHeader Header = new STUNHeader();
-        public List<STUNAttribute> Attributes = new List<STUNAttribute>();
+        public STUNv2Header Header = new STUNv2Header();
+        public List<STUNv2Attribute> Attributes = new List<STUNv2Attribute>();
 
-        public STUNMessage()
+        public STUNv2Message()
         { }
 
-        public STUNMessage(STUNMessageTypesEnum stunMessageType)
+        public STUNv2Message(STUNv2MessageTypesEnum stunMessageType)
         {
-            Header = new STUNHeader(stunMessageType);
+            Header = new STUNv2Header(stunMessageType);
         }
 
-        public static STUNMessage ParseSTUNMessage(byte[] buffer, int bufferLength)
+        public void AddUsernameAttribute(string username)
+        {
+            byte[] usernameBytes = Encoding.UTF8.GetBytes(username);
+            Attributes.Add(new STUNv2Attribute(STUNv2AttributeTypesEnum.Username, (ushort)usernameBytes.Length, usernameBytes));
+        }
+
+        public void AddMessageIntegrityAttribute(string key)
+        {
+            MD5 md5 = new MD5CryptoServiceProvider();
+            byte[] hmacKey = md5.ComputeHash(Encoding.UTF8.GetBytes(key));
+            HMACSHA1 hmacSHA = new HMACSHA1(hmacKey, true);
+            byte[] hmac = hmacSHA.ComputeHash(ToByteBuffer());
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(hmac);
+            }
+            Attributes.Add(new STUNv2Attribute(STUNv2AttributeTypesEnum.MessageIntegrity, (ushort)hmac.Length, hmac));
+        }
+
+        public void AddFingerPrintAttribute()
+        {
+            byte[] messageBytes = ToByteBuffer();
+            uint crc = Crc32.Compute(messageBytes) ^ FINGERPRINT_XOR;
+            byte[] fingerPrint = (BitConverter.IsLittleEndian) ? BitConverter.GetBytes(NetConvert.DoReverseEndian(crc)) : BitConverter.GetBytes(crc);
+            Attributes.Add(new STUNv2Attribute(STUNv2AttributeTypesEnum.FingerPrint, 4, fingerPrint));
+        }
+
+        public static STUNv2Message ParseSTUNMessage(byte[] buffer, int bufferLength)
         {
             if (buffer != null && buffer.Length > 0 && buffer.Length >= bufferLength)
             {
-                STUNMessage stunMessage = new STUNMessage();
-                stunMessage.Header = STUNHeader.ParseSTUNHeader(buffer);
+                STUNv2Message stunMessage = new STUNv2Message();
+                stunMessage.Header = STUNv2Header.ParseSTUNHeader(buffer);
 
                 if (stunMessage.Header.MessageLength > 0)
                 {
-                    stunMessage.Attributes = STUNAttribute.ParseMessageAttributes(buffer, STUNHeader.STUN_HEADER_LENGTH, bufferLength);
+                    stunMessage.Attributes = STUNv2Attribute.ParseMessageAttributes(buffer, STUNv2Header.STUN_HEADER_LENGTH, bufferLength);
                 }
 
                 return stunMessage;
@@ -78,29 +109,32 @@ namespace SIPSorcery.Net
         public byte[] ToByteBuffer()
         {
             UInt16 attributesLength = 0;
-            foreach (STUNAttribute attribute in Attributes)
+            foreach (STUNv2Attribute attribute in Attributes)
             {
-                attributesLength += Convert.ToUInt16(STUNAttribute.STUNATTRIBUTE_HEADER_LENGTH + attribute.Length);
+                attributesLength += Convert.ToUInt16(STUNv2Attribute.STUNATTRIBUTE_HEADER_LENGTH + attribute.Length);
             }
 
-            int messageLength = STUNHeader.STUN_HEADER_LENGTH + attributesLength;
+            int messageLength = STUNv2Header.STUN_HEADER_LENGTH + attributesLength;
             byte[] buffer = new byte[messageLength];
 
             if (BitConverter.IsLittleEndian)
             {
                 Buffer.BlockCopy(BitConverter.GetBytes(Utility.ReverseEndian((UInt16)Header.MessageType)), 0, buffer, 0, 2);
-                Buffer.BlockCopy(BitConverter.GetBytes(Utility.ReverseEndian(attributesLength)), 0, buffer, 2, 2); 
+                Buffer.BlockCopy(BitConverter.GetBytes(Utility.ReverseEndian(attributesLength)), 0, buffer, 2, 2);
+                Buffer.BlockCopy(BitConverter.GetBytes(NetConvert.DoReverseEndian(STUNv2Header.MAGIC_COOKIE)), 0, buffer, 4, 4);
             }
             else
             {
                 Buffer.BlockCopy(BitConverter.GetBytes((UInt16)Header.MessageType), 0, buffer, 0, 2);
                 Buffer.BlockCopy(BitConverter.GetBytes(attributesLength), 0, buffer, 2, 2);
+                Buffer.BlockCopy(BitConverter.GetBytes(STUNv2Header.MAGIC_COOKIE), 0, buffer, 4, 4);
             }
 
-            Buffer.BlockCopy(Header.TransactionId, 0, buffer, 4, STUNHeader.TRANSACTION_ID_LENGTH);
+
+            Buffer.BlockCopy(Header.TransactionId, 0, buffer, 8, STUNv2Header.TRANSACTION_ID_LENGTH);
 
             int attributeIndex = 20;
-            foreach (STUNAttribute attr in Attributes)
+            foreach (STUNv2Attribute attr in Attributes)
             {
                 attributeIndex += attr.ToByteBuffer(buffer, attributeIndex);
             }
@@ -112,52 +146,12 @@ namespace SIPSorcery.Net
         {
             string messageDescr = "STUN Message: " + Header.MessageType.ToString() + ", length=" + Header.MessageLength;
 
-            foreach (STUNAttribute attribute in Attributes)
+            foreach (STUNv2Attribute attribute in Attributes)
             {
                 messageDescr += "\n " + attribute.ToString();
             }
 
             return messageDescr;
         }
-
-        public void AddUsernameAttribute(string username)
-        {
-            byte[] usernameBytes = Encoding.UTF8.GetBytes(username);
-            Attributes.Add(new STUNAttribute(STUNAttributeTypesEnum.Username, usernameBytes));
-        }
-        
-		#region Unit testing.
-
-		#if UNITTEST
-	
-		[TestFixture]
-		public class STUNMessageUnitTest
-		{
-			[TestFixtureSetUp]
-			public void Init()
-			{
-				
-			}
-
-			
-			[TestFixtureTearDown]
-			public void Dispose()
-			{			
-				
-			}
-
-			
-			[Test]
-			public void SampleTest()
-			{
-				Console.WriteLine(System.Reflection.MethodBase.GetCurrentMethod().Name);
-				
-				Assert.IsTrue(true, "True was false.");
-			}
-		}
-
-		#endif
-
-		#endregion
 	}
 }
