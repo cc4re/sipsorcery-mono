@@ -1,8 +1,8 @@
 ﻿// ============================================================================
-// FileName: People.cs
+// FileName: Note.cs
 //
 // Description:
-// Represents a list of Person objects for the 37 Signals contact management system Highrise.
+// Represents a Note object for the 37 Signals contact management system Highrise.
 //
 // Author(s):
 // Aaron Clauson
@@ -34,7 +34,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // ============================================================================
 
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,10 +42,64 @@ using System.Xml.Serialization;
 
 namespace SIPSorcery.CRM.ThirtySevenSignals
 {
-    [XmlRootAttribute("people", Namespace = "", IsNullable = false)]
-    public class People
+    public enum SubjectTypesEnum
     {
-        [XmlElement("person")]
-        public List<Person> PersonList { get; set; }
+        Party,
+        Deal,
+        Kase
+    }
+
+    [Serializable()]
+    [XmlRootAttribute("note", Namespace = "", IsNullable = false)]
+    public class Note
+    {
+        public const string DATETIME_STRING_FORMAT = "yyyy-MM-ddTHH:mm:ssZ";
+
+        [XmlElement("id")]
+        public int ID { get; set; }
+
+        [XmlElement("body")]
+        public string Body { get; set; }
+
+        [XmlElement("author-id")]
+        public int AuthorID { get; set; }
+
+        [XmlElement("subject-id")]
+        public int SubjectID { get; set; }
+
+        [XmlElement("subject-name")]
+        public SubjectTypesEnum SubjectType { get; set; }
+
+        [XmlElement("subject-type")]
+        public string SubjectName { get; set; }
+
+        [XmlElement("created-at")]
+        public string CreatedAtStr { get; set; }
+
+        [XmlIgnore]
+        public DateTimeOffset CreatedAt
+        {
+            get { return DateTimeOffset.Parse(CreatedAtStr); }
+            set { CreatedAtStr = value.ToUniversalTime().ToString(DATETIME_STRING_FORMAT); }
+        }
+
+        [XmlElement("updated-at")]
+        public string UpdatedAtStr { get; set; }
+
+        [XmlIgnore]
+        public DateTimeOffset UpdatedAt
+        {
+            get { return DateTimeOffset.Parse(UpdatedAtStr); }
+            set { UpdatedAtStr = value.ToUniversalTime().ToString(DATETIME_STRING_FORMAT); }
+        }
+
+        [XmlElement("visible-to")]
+        public string VisibleTo { get; set; }
+
+        [XmlElement("owner-id", IsNullable=true)]
+        public int? OwnerID { get; set; }
+
+        [XmlElement("group-id", IsNullable = true)]
+        public int? GroupID { get; set; }
     }
 }

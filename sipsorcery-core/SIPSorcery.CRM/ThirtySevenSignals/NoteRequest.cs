@@ -1,8 +1,8 @@
 ﻿// ============================================================================
-// FileName: People.cs
+// FileName: NoteRequest.cs
 //
 // Description:
-// Represents a list of Person objects for the 37 Signals contact management system Highrise.
+// Retrieves Note objects from the 37 Signals contact management system Highrise.
 //
 // Author(s):
 // Aaron Clauson
@@ -34,19 +34,53 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // ============================================================================
 
-
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Security;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Serialization;
+using SIPSorcery.Sys;
 
 namespace SIPSorcery.CRM.ThirtySevenSignals
 {
-    [XmlRootAttribute("people", Namespace = "", IsNullable = false)]
-    public class People
+    public class NoteRequest : HighriseRequest<Note, Notes>
     {
-        [XmlElement("person")]
-        public List<Person> PersonList { get; set; }
+        private const string URL_NOUN = "notes";
+
+        public NoteRequest(string url, string authToken) :
+            base(url, URL_NOUN, authToken)
+        { }
+
+        public string CreateNoteForPerson(int personID, string body)
+        {
+            string createURL = BaseUrl + "/people/" + personID + "/notes.xml";
+            //string createURL = BaseUrl + "/notes.xml";
+
+            string createXML = 
+                "<note>" +
+                " <body>" + SecurityElement.Escape(body) + "</body>" +
+                //" <subject-id type=\"integer\">" + personID + "</subject-id>" +
+                //" <subject-type>" + SubjectTypesEnum.Party + "</subject-type>" +
+                "</note>";
+
+            return base.CreateItem(createURL, createXML);
+        }
+
+        public string CreateNoteForCompany(int companyID, string body)
+        {
+            string createURL = BaseUrl + "/companies/" + companyID + "/notes.xml";
+
+            string createXML =
+                "<note>" +
+                " <body>" + SecurityElement.Escape(body) + "</body>" +
+                "</note>";
+
+            return base.CreateItem(createURL, createXML);
+        }
     }
 }

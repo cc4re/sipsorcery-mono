@@ -1,8 +1,8 @@
 ﻿// ============================================================================
-// FileName: People.cs
+// FileName: Notes.cs
 //
 // Description:
-// Represents a list of Person objects for the 37 Signals contact management system Highrise.
+// Represents a list of Note objects for the 37 Signals contact management system Highrise.
 //
 // Author(s):
 // Aaron Clauson
@@ -34,7 +34,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // ============================================================================
 
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,10 +42,10 @@ using System.Xml.Serialization;
 
 namespace SIPSorcery.CRM.ThirtySevenSignals
 {
-    [XmlRootAttribute("people", Namespace = "", IsNullable = false)]
-    public class People
+    [XmlRootAttribute("notes", Namespace = "", IsNullable = false)]
+    public class Notes
     {
-        [XmlElement("person")]
-        public List<Person> PersonList { get; set; }
+        [XmlElement("note")]
+        public List<Note> NoteList { get; set; }
     }
 }

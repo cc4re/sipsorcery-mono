@@ -1,8 +1,8 @@
 ﻿// ============================================================================
-// FileName: People.cs
+// FileName: Company.cs
 //
 // Description:
-// Represents a list of Person objects for the 37 Signals contact management system Highrise.
+// Represents a Company object for the 37 Signals contact management system Highrise.
 //
 // Author(s):
 // Aaron Clauson
@@ -34,7 +34,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // ============================================================================
 
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,10 +42,54 @@ using System.Xml.Serialization;
 
 namespace SIPSorcery.CRM.ThirtySevenSignals
 {
-    [XmlRootAttribute("people", Namespace = "", IsNullable = false)]
-    public class People
+    [Serializable()]
+    [XmlRootAttribute("company", Namespace = "", IsNullable = false)]
+    public class Company
     {
-        [XmlElement("person")]
-        public List<Person> PersonList { get; set; }
+        public const string DATETIME_STRING_FORMAT = "yyyy-MM-ddTHH:mm:ssZ";
+
+        [XmlElement("id")]
+        public int ID { get; set; }
+
+        [XmlElement("author-id")]
+        public int AuthorID { get; set; }
+
+        [XmlElement("name")]
+        public string Name { get; set; }
+
+        [XmlElement("background")]
+        public string Background { get; set; }
+
+        [XmlElement("created-at")]
+        public string CreatedAtStr { get; set; }
+
+        [XmlIgnore]
+        public DateTimeOffset CreatedAt
+        {
+            get { return DateTimeOffset.Parse(CreatedAtStr); }
+            set { CreatedAtStr = value.ToUniversalTime().ToString(DATETIME_STRING_FORMAT); }
+        }
+
+        [XmlElement("updated-at")]
+        public string UpdatedAtStr { get; set; }
+
+        [XmlIgnore]
+        public DateTimeOffset UpdatedAt
+        {
+            get { return DateTimeOffset.Parse(UpdatedAtStr); }
+            set { UpdatedAtStr = value.ToUniversalTime().ToString(DATETIME_STRING_FORMAT); }
+        }
+
+        [XmlElement("visible-to")]
+        public string VisibleTo { get; set; }
+
+        [XmlElement("owner-id", IsNullable=true)]
+        public int? OwnerID { get; set; }
+
+        [XmlElement("group-id", IsNullable = true)]
+        public int? GroupID { get; set; }
+
+        [XmlElement("contact-data")]
+        public ContactData ContactData { get; set; }
     }
 }

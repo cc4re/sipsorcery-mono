@@ -1,8 +1,8 @@
 ﻿// ============================================================================
-// FileName: People.cs
+// FileName: CompanyRequest.cs
 //
 // Description:
-// Represents a list of Person objects for the 37 Signals contact management system Highrise.
+// Retrieves Company objects from the 37 Signals contact management system Highrise.
 //
 // Author(s):
 // Aaron Clauson
@@ -34,19 +34,25 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // ============================================================================
 
-
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Serialization;
+using SIPSorcery.Sys;
 
 namespace SIPSorcery.CRM.ThirtySevenSignals
 {
-    [XmlRootAttribute("people", Namespace = "", IsNullable = false)]
-    public class People
+    public class CompanyRequest : HighriseRequest<Company, Companies>
     {
-        [XmlElement("person")]
-        public List<Person> PersonList { get; set; }
+        private const string URL_NOUN = "companies";
+
+        public CompanyRequest(string url, string authToken) :
+            base(url, URL_NOUN, authToken)
+        { }
     }
 }
