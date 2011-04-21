@@ -2,3 +2,6 @@ Build/
 bin/
 *.pidb
 *.userprefs
+*.exe
+*.dll
+*.mdb

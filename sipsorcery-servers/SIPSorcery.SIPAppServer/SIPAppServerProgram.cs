@@ -54,7 +54,7 @@ namespace SIPSorcery.SIPAppServer
                 // requested from the Dynamic Language Runtime which is what happens if the first time it's requested is in an IronRuby dialplan.
                 using (SIPSorceryAppEntities appEntities = new SIPSorceryAppEntities())
                 {
-                    logger.Debug("Lookups count=" + (from lookup in appEntities.SIPDialplanLookups select lookup).Count() + ", forcing entity framework assemblies to load.");
+                    //logger.Debug("Lookups count=" + (from lookup in appEntities.SIPDialplanLookups select lookup).Count() + ", forcing entity framework assemblies to load.");
                 }
                 
                 //if (args != null && args.Length > 0)
@@ -104,7 +104,7 @@ namespace SIPSorcery.SIPAppServer
             catch (Exception excp)
             {
                 Console.WriteLine("Exception SIP App Server Main. " + excp.Message);
-
+				
                 if (isConsole) {
                     Console.WriteLine("press any key to exit...");
                     Console.ReadLine();

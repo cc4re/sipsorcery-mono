@@ -9,7 +9,6 @@ namespace SIPSorcery.Sys
     public enum StorageTypes
     {
         Unknown,
-        MSSQL,
         Postgresql,
         MySQL,
         XML,

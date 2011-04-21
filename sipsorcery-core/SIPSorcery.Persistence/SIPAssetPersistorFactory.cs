@@ -77,10 +77,6 @@ namespace SIPSorcery.Persistence
                 //{
                 //    return new SimpleDBAssetPersistor<T>(storageConnectionStr);
                 //}
-                else if (storageType == StorageTypes.SQLLinqMSSQL)
-                {
-                    return new MSSQLAssetPersistor<T>(System.Data.SqlClient.SqlClientFactory.Instance, storageConnectionStr);
-                }
                 else
                 {
                     throw new ApplicationException(storageType + " is not supported as a CreateSIPAssetPersistor option.");
