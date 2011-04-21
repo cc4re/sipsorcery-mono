@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -31,7 +31,6 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,25 +51,21 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\stable\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\stable\log4net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ThirtySevenSignals\NoteRequest.cs" />
@@ -127,13 +122,13 @@
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>  -->
-<Target Name="AfterBuild" DependsOnTargets="AssignTargetPaths;Compile;ResolveKeySource" Inputs="$(MSBuildAllProjects);@(IntermediateAssembly)" Outputs="$(OutputPath)$(_SGenDllName)">
-   <!-- Delete the file because I can't figure out how to force the SGen task. -->
-   <Delete Files="$(TargetDir)$(TargetName).XmlSerializers.dll" ContinueOnError="true" />
-   <SGen BuildAssemblyName="$(TargetFileName)" BuildAssemblyPath="$(OutputPath)" References="@(ReferencePath)" ShouldGenerateSerializer="true" UseProxyTypes="false" KeyContainer="$(KeyContainerName)" KeyFile="$(KeyOriginatorFile)" DelaySign="$(DelaySign)" ToolPath="$(SGenToolPath)" Platform="$(Platform)">
+  <Target Name="AfterBuild" DependsOnTargets="AssignTargetPaths;Compile;ResolveKeySource" Inputs="$(MSBuildAllProjects);@(IntermediateAssembly)" Outputs="$(OutputPath)$(_SGenDllName)">
+    <!-- Delete the file because I can't figure out how to force the SGen task. -->
+    <Delete Files="$(TargetDir)$(TargetName).XmlSerializers.dll" ContinueOnError="true" />
+    <SGen BuildAssemblyName="$(TargetFileName)" BuildAssemblyPath="$(OutputPath)" References="@(ReferencePath)" ShouldGenerateSerializer="true" UseProxyTypes="false" KeyContainer="$(KeyContainerName)" KeyFile="$(KeyOriginatorFile)" DelaySign="$(DelaySign)" ToolPath="$(SGenToolPath)" Platform="$(Platform)">
       <Output TaskParameter="SerializationAssembly" ItemName="SerializationAssembly" />
-   </SGen>
-</Target>
+    </SGen>
+  </Target>
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "c:\temp\sipsorcery\"</PostBuildEvent>
   </PropertyGroup>

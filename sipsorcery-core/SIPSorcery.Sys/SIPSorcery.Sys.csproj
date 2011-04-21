@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -7,13 +7,9 @@
     <ProjectGuid>{6D8DBB7D-8937-4CC4-9703-561F776F9DBD}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>
-    </ApplicationIcon>
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
     <AssemblyName>SIPSorcery.Sys</AssemblyName>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
@@ -21,8 +17,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SIPSorcery.Sys</RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <StartupObject>
-    </StartupObject>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -44,13 +38,10 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>..\Build\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
@@ -58,61 +49,44 @@
     </DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
     <Optimize>false</Optimize>
     <RegisterForComInterop>false</RegisterForComInterop>
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
     <DebugType>full</DebugType>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
-    <DebugSymbols>false</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
     <Optimize>true</Optimize>
     <RegisterForComInterop>false</RegisterForComInterop>
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
     <DebugType>none</DebugType>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\stable\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework, Version=2.2.2.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\stable\nunit.framework.dll</HintPath>
+      <Package>nunit</Package>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
-    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data">
       <Name>System.Data</Name>
     </Reference>
     <Reference Include="System.Data.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
@@ -124,6 +98,11 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\stable\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppState.cs">

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -7,13 +7,9 @@
     <ProjectGuid>{CEA8E4DD-9CE4-4878-B075-34522417ACD0}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>
-    </ApplicationIcon>
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
     <AssemblyName>SIPSorcery.Servers.Cores</AssemblyName>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
@@ -21,8 +17,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SIPSorcery.Servers</RootNamespace>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <StartupObject>
-    </StartupObject>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -44,97 +38,60 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>..\Build\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
-    <DefineConstants>
-    </DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
     <DebugSymbols>true</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
     <Optimize>false</Optimize>
     <RegisterForComInterop>false</RegisterForComInterop>
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
     <DebugType>full</DebugType>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <ConfigurationOverrideFile>
     </ConfigurationOverrideFile>
     <DefineConstants>TRACE</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
-    <DebugSymbols>false</DebugSymbols>
     <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
     <Optimize>true</Optimize>
     <RegisterForComInterop>false</RegisterForComInterop>
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
     <DebugType>none</DebugType>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Accessibility" />
-    <Reference Include="IronPython, Version=1.0.60816.1877, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\stable\IronPython.dll</HintPath>
-    </Reference>
-    <Reference Include="IronRuby, Version=0.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\stable\IronRuby.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\stable\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Scripting, Version=0.9.5.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\stable\Microsoft.Scripting.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework">
       <Name>nunit.framework</Name>
       <HintPath>..\stable\nunit.framework.dll</HintPath>
+      <Package>nunit</Package>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
-    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
       <Aliases>global,syscore</Aliases>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Runtime.Serialization">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.ServiceModel">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.ServiceModel.Web">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
@@ -143,7 +100,6 @@
       <Name>System.XML</Name>
     </Reference>
     <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <ProjectReference Include="..\SIPSorcery.AppServer.DialPlan\SIPSorcery.AppServer.DialPlan.csproj">
       <Project>{DC87DB52-5C99-4282-ABEA-F7EC81AC6D4C}</Project>
@@ -177,6 +133,23 @@
       <Project>{5D73FBAC-897F-4FEA-BAF9-61823545FE70}</Project>
       <Name>SIPSorcery.Web.Services</Name>
     </ProjectReference>
+    <Reference Include="IronPython, Version=2.6.10920.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\stable\IronPython.dll</HintPath>
+    </Reference>
+    <Reference Include="IronRuby, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\stable\IronRuby.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\stable\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Scripting, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\stable\Microsoft.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs">
