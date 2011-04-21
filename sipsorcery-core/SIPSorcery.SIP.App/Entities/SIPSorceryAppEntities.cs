@@ -6,7 +6,7 @@ namespace SIPSorcery.SIP.App.Entities
 	/// <summary>
 	/// SIP sorcery app entities. Context class for Entity Framework.
 	/// </summary>
-	public class SIPSorceryAppEntities
+	public class SIPSorceryAppEntities : IDisposable
 	{
 		public SIPSorceryAppEntities ()
 		{
@@ -15,7 +15,8 @@ namespace SIPSorcery.SIP.App.Entities
 		
 		public List<SIPDialplanLookup> SIPDialplanLookups
 		{
-			get {
+			get
+			{
 				return null;	
 			}
 		}
@@ -44,7 +45,10 @@ namespace SIPSorcery.SIP.App.Entities
 			}
 		}
 		
-		
+		public void Dispose()
+		{
+			//not implemented yet.	
+		}
 	}
 }
 

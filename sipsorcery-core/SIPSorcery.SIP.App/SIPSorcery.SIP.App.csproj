@@ -148,7 +148,6 @@
     <Compile Include="SIPUserAgents\SIPClientUserAgent.cs" />
     <Compile Include="SIPUserAgents\SIPTransferServerUserAgent.cs" />
     <Compile Include="Switchboard\SwitchboardToken.cs" />
-    <Compile Include="Entities\MonoObjectSet.cs" />
     <Compile Include="Entities\SIPDialplanLookup.cs" />
     <Compile Include="Entities\SIPDialplanRoute.cs" />
     <Compile Include="Entities\SIPDialplanProvider.cs" />
