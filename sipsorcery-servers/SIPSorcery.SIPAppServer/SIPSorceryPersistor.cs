@@ -104,9 +104,9 @@ namespace SIPSorcery.SIPAppServer
                     storageConnectionStr = AppDomain.CurrentDomain.BaseDirectory + storageConnectionStr;
                 }
 
-                if (!storageConnectionStr.EndsWith(@"\"))
+                if (!storageConnectionStr.EndsWith(Path.DirectorySeparatorChar.ToString()))
                 {
-                    storageConnectionStr += @"\";
+                    storageConnectionStr += Path.DirectorySeparatorChar;
                 }
 
                 if (!Directory.Exists(storageConnectionStr))
